@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 import matplotlib.mlab as mlab
 from scipy.stats import norm
 # import BDdb
-import astrodb
+from astrodbkit import astrodb
 import pandas as pd
 
 db = astrodb.Database('/Users/victoriaditomasso/Desktop/BDNYCdeprecated.db')
@@ -27,7 +27,7 @@ def mc_rms(y_array1, y_array2, unc1, unc2, n):
         y_array1_rand = y_array1 + (np.random.randn(len(y_array1)) * unc1)
         y_array2_rand = y_array2 + (np.random.randn(len(y_array2)) * unc2)
         diff = y_array1_rand - y_array2_rand
-        rms = (np.sum(diff ** 2)) / (len(diff)) ** (0.5)
+        rms = np.sum(diff ** 2) / len(diff) ** 0.5
         RMS.append(rms)
 
     avg = np.mean(RMS)
@@ -92,8 +92,7 @@ def get_comp_data(spec_id):
     Arguments: spec_id
     Outputs: w_comp,f_comp,rv_comp,unc_comp"""
 
-    data_comp = db.query(
-        "select spectra.wavelength, spectra.flux, spectra.unc from spectra where spectra.id={}".format(row['spec_id']))
+    data_comp = db.query("select spectra.wavelength, spectra.flux, spectra.unc from spectra where spectra.id={}").format(spec_id)
 
     w_comp = np.asarray(data_comp[0][0])
 
@@ -115,7 +114,7 @@ def rv_shift(wavelength, rv):
     Arguments: wavelength array, rv
     Outputs: shifted_wavelength"""
 
-    shifted_wavelength = (wavelength) * (1. - (rv / 2.99792458e5))
+    shifted_wavelength = wavelength * (1. - (rv / 2.99792458e5))
 
     return shifted_wavelength
 
@@ -134,9 +133,6 @@ def normalize_spectra(f1, unc1, f2, unc2):
 
     return f2_norm
 
-
-import numpy as np
-import matplotlib.mlab as mlab
 
 
 def mc_output_hist(MC_calculations, bins=25):
@@ -177,7 +173,7 @@ def yfcq(tar_source_id, spec_order, path_to_comp_sample_dataframe):
     unc_tar = data_tar[0][4]
 
     # Adjusting wavelength array of the target according to its RV
-    w_tar = w_tar * (1. - (rv_tar / 2.99792458e5))
+    w_tar *= 1. - (rv_tar / 2.99792458e5)
 
     # Reads in the dataframe
     df = pd.read_csv(path_to_comp_sample_dataframe, sep='\t')
@@ -209,7 +205,7 @@ def yfcq(tar_source_id, spec_order, path_to_comp_sample_dataframe):
         unc_comp = snr_to_unc(unc_comp)
 
         # Shifts spectra based on their RVs
-        w_comp = w_comp * (1. - (rv_comp / 2.99792458e5))
+        w_comp *= 1. - (rv_comp / 2.99792458e5)
 
         # Interpolates comparison spectrum and comparison unc
         # Remember: once you interpolate, you need to plot the w_tar vs the interpolated flux NOT w_comp vs interpolated flux
@@ -257,7 +253,7 @@ def vis_rms_results(tar_source_id, spec_order, path_to_sorted_dataframe):
     w_tar, f_tar, rv_tar, unc_tar = get_tar_data(tar_source_id, spec_order)
 
     # Shift target wavelength according to its RV
-    w_tar = (w_tar) * (1. - (rv_tar / 2.99792458e5))
+    w_tar = w_tar * (1. - (rv_tar / 2.99792458e5))
 
     # Read in the dataframe
     df = pd.read_csv(path_to_sorted_dataframe, sep='\t')
