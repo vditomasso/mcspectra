@@ -1,4 +1,5 @@
 # Function that does n iterations of RMS calculation
+# classes
 
 import matplotlib.pyplot as plt
 import numpy as np
